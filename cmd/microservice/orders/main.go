@@ -23,4 +23,26 @@ func main() {
 		}
 	}()
 
+	<-ctx.Done()
+
+	log.Println("closing the orders microservice")
+
+	if err := server.Close(); err != nil {
+		panic(err)
+	}
+}
+
+func createOrderMicroservice() (router *chi.Mux, closefn func()) {
+	cmd.WaitForService(os.Getenv("SHOP_RABBITMQ_ADDR"))
+
+	shopHTTPClient := orders_infra_product.NewHTTPClient(os.Getenv("SHOP_SERVICE_ADDR"))
+
+	r := cmd.CreateRouter()
+
+	orders_public_http.AddRoutes(r, ordersService, ordersRepo)
+	orders_private_http.AddRoutes(r, ordersService, ordersRepo)
+
+	return r, func() {
+
+	}
 }
